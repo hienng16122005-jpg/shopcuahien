@@ -161,10 +161,10 @@ async function loadInitialData() {
     }
 
     try {
-        // 2. Chạy các fetch song song để tối ưu tốc độ
-        const configPromise = safeFetch(`${API_BASE_URL}/config`).catch(() => null);
-        const productsPromise = safeFetch(`${API_BASE_URL}/products`).catch(() => null);
-        const magazinePromise = safeFetch(`${API_BASE_URL}/magazine`).catch(() => null);
+        // 2. Chạy các fetch song song dùng fetch tiêu chuẩn
+        const configPromise = fetch('/api/config').then(r => r.ok ? r.json() : null).catch(() => null);
+        const productsPromise = fetch('/api/products').then(r => r.ok ? r.json() : null).catch(() => null);
+        const magazinePromise = fetch('/api/magazine').then(r => r.ok ? r.json() : null).catch(() => null);
 
         // Đợi cấu hình và sản phẩm trước (quan trọng nhất)
         const [configData, prodData] = await Promise.all([configPromise, productsPromise]);
@@ -1061,8 +1061,8 @@ function initEvents() {
             }
             
             try {
-                console.log("Q&H: Sending login request to", `${API_BASE_URL}/users/login`);
-                const response = await fetch(`${API_BASE_URL}/users/login`, {
+                console.log("Q&H: Sending login request to /api/users/login");
+                const response = await fetch('/api/users/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -1134,7 +1134,8 @@ function initEvents() {
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/users`, {
+                console.log("Q&H: Sending register request to /api/users");
+                const response = await fetch('/api/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password })
@@ -1150,7 +1151,7 @@ function initEvents() {
                 handleAuthResponse(data, 'Đăng ký tài khoản thành công!');
             } catch (err) {
                 console.error("Q&H: Register failure:", err);
-                showToast(err.message);
+                showToast(err.message || 'Lỗi kết nối server');
             } finally {
                 if (submitBtn) {
                     submitBtn.disabled = false;
@@ -1254,9 +1255,16 @@ function initEvents() {
         try {
             // Lấy đơn hàng thật từ Database dựa trên email
             const email = localStorage.getItem('qh_userEmail');
-            const orders = await safeFetch(`${API_BASE_URL}/orders/myorders?email=${email}`, {
-                headers: { 'x-user-email': email }
+            const token = localStorage.getItem('qh_sessionToken');
+            const response = await fetch(`/api/orders/myorders?email=${email}`, {
+                headers: { 
+                    'x-user-email': email,
+                    'x-admin-token': token || ''
+                }
             });
+            
+            if (!response.ok) throw new Error('Không thể tải đơn hàng');
+            const orders = await response.json();
             
             const filteredOrders = orders.filter(o => (o.status || 'Chờ xác nhận') === statusFilter);
 
@@ -1429,11 +1437,13 @@ function initEvents() {
                 const userEmail = localStorage.getItem('qh_userEmail');
 
                 try {
-                    const response = await safeFetch(`${API_BASE_URL}/orders`, {
+                    const token = localStorage.getItem('qh_sessionToken');
+                    const response = await fetch('/api/orders', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'x-user-email': userEmail || ''
+                            'x-user-email': userEmail || '',
+                            'x-admin-token': token || ''
                         },
                         body: JSON.stringify({
                             customerInfo: { name, phone, email, address, note },
@@ -1448,50 +1458,57 @@ function initEvents() {
                         })
                     });
 
-                    const finalizeOrderUI = (resData) => {
-                        const order = resData.order || resData;
-                        if (!isDirectCheckout) {
-                            cart = [];
-                            localStorage.setItem('qh_cart', JSON.stringify(cart));
-                            updateCartUI();
-                        }
-                        
-                        if (isLoggedIn) {
-                            renderProfileOrders();
-                        }
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || 'Lỗi khi đặt hàng');
+                    }
+                    
+                    const orderData = await response.json();
+                    const order = orderData.order || orderData;
 
-                        const checkoutSuccess = document.getElementById('checkoutSuccess');
-                        const checkoutQR = document.getElementById('checkoutQR');
-                        if (checkoutSuccess) {
-                            newForm.style.display = 'none';
-                            if (checkoutQR) checkoutQR.style.display = 'none';
-                            checkoutSuccess.style.display = 'block';
-                            
-                            const orderId = order.id || order._id || resData.orderId || "N/A";
-                            const successOrderId = document.getElementById('successOrderId');
-                            if (successOrderId) successOrderId.textContent = '#' + orderId.toString().toUpperCase();
-                            
-                            const successOrderTotal = document.getElementById('successOrderTotal');
-                            if (successOrderTotal && order.totalPrice) successOrderTotal.textContent = order.totalPrice.toLocaleString() + 'đ';
-                            
-                            const successOrderItems = document.getElementById('successOrderItems');
-                            if (successOrderItems && order.items) {
-                                successOrderItems.innerHTML = order.items.map(item => `
-                                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px;">
-                                        <span>${item.name} x${item.quantity}</span>
-                                        <span>${(item.price * item.quantity).toLocaleString()}đ</span>
-                                    </div>
-                                `).join('');
-                            }
-                        } else {
-                            if (checkoutOverlay) checkoutOverlay.classList.remove('active');
-                            showToast('Đặt hàng thành công!');
+                    if (!isDirectCheckout) {
+                        cart = [];
+                        localStorage.setItem('qh_cart', JSON.stringify(cart));
+                        updateCartUI();
+                    }
+                    
+                    if (isLoggedIn) {
+                        renderProfileOrders();
+                    }
+
+                    const checkoutSuccess = document.getElementById('checkoutSuccess');
+                    const checkoutQR = document.getElementById('checkoutQR');
+                    if (checkoutSuccess) {
+                        newForm.style.display = 'none';
+                        if (checkoutQR) checkoutQR.style.display = 'none';
+                        checkoutSuccess.style.display = 'block';
+                        
+                        const orderId = order.id || order._id || "N/A";
+                        const successOrderId = document.getElementById('successOrderId');
+                        if (successOrderId) successOrderId.textContent = '#' + orderId.toString().toUpperCase().substring(0,8);
+                        
+                        const successOrderTotal = document.getElementById('successOrderTotal');
+                        if (successOrderTotal && order.totalPrice) successOrderTotal.textContent = order.totalPrice.toLocaleString() + 'đ';
+                        
+                        const successOrderItems = document.getElementById('successOrderItems');
+                        if (successOrderItems && order.items) {
+                            successOrderItems.innerHTML = order.items.map(item => `
+                                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px;">
+                                    <span>${item.name} x${item.quantity}</span>
+                                    <span>${(item.price * item.quantity).toLocaleString()}đ</span>
+                                </div>
+                            `).join('');
                         }
-                    };
+                    } else {
+                        showToast('Đặt hàng thành công!');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    }
 
                     if (payment === 'BANK') {
-                        const realOrderId = response.orderId || (response.order ? response.order.id : "");
-                        const realOrderCode = realOrderId.toString().replace('ORD-', '');
+                        const realOrderId = orderData.orderId || (orderData.order ? orderData.order._id || orderData.order.id : orderData._id);
+                        const realOrderCode = realOrderId.toString().substring(0,8);
                         const qrView = document.getElementById('checkoutQR');
                         const qrCodeImg = document.getElementById('qrCodeImg');
                         const qrAmount = document.getElementById('qrAmount');
