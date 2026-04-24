@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết sản phẩm | Q&H SKINLAB</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        /* Specific styles for Product Detail Page */
+        .breadcrumb {
+            padding: 20px 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .breadcrumb-item {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .breadcrumb-item:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        .breadcrumb a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .breadcrumb span {
+            margin: 0 5px;
+        }
+
+        .product-main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            background: var(--white);
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .product-images {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .main-image-wrap {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .main-image-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .thumbnail-list {
+            display: flex;
+            gap: 10px;
+        }
+        .thumb-item {
+            width: 80px;
+            height: 80px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .thumb-item.active {
+            border-color: var(--primary);
+        }
+        .thumb-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .pd-brand-link {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+        .pd-name {
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+        .pd-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .pd-rating .stars { color: #f1c40f; }
+        .pd-divider { color: #ddd; }
+
+        .pd-price-container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pd-price-val {
+            display: flex;
+            align-items: baseline;
+            gap: 15px;
+        }
+        .pd-current-price {
+            font-size: 32px;
+            font-weight: 900;
+            color: #007bff;
+        }
+        .pd-old-price {
+            font-size: 16px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+        .pd-discount-tag {
+            background: var(--red);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 12px;
+        }
+
+        .pd-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .pd-qty-selector {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .qty-box {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        .qty-box button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .qty-box input {
+            width: 50px;
+            border: none;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            text-align: center;
+            outline: none;
+            font-weight: 700;
+        }
+
+        .pd-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .btn-pd-buy {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 4px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.3s;
+        }
+        .btn-pd-buy:hover { background: var(--primary-dark); }
+        
+        .btn-pd-favorite {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            color: #999;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-pd-cart {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 18px;
+            border-radius: 4px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        .btn-pd-cart:hover { background: #f0f7ff; }
+
+.pd-promo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .promo-item {
+            border: 1px solid #ffcccc;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .promo-title {
+            background: #fff0f0;
+            padding: 10px 15px;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--dark-red);
+        }
+        .promo-body {
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            font-size: 13px;
+        }
+        .promo-body img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .pd-details-section {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .pd-section-title {
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        .pd-spec-list {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+        .pd-spec-list li {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .pd-content-text h4 {
+            font-size: 16px;
+            font-weight: 800;
+            margin: 20px 0 10px;
+        }
+        .pd-content-text p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+
+        .pd-reviews-section {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 8px;
+        }
+        .review-summary {
+            display: flex;
+            gap: 50px;
+            align-items: center;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+        .score-box {
+            text-align: center;
+        }
+        .big-score {
+            font-size: 56px;
+            font-weight: 900;
+            color: var(--primary);
+        }
+        .stars-row {
+            color: #f1c40f;
+            font-size: 20px;
+            margin: 5px 0;
+        }
+        .review-bars {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 13px;
+        }
+        .bar-bg {
+            flex: 1;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            background: var(--primary);
+        }
+
+        /* REVIEWS LIST */
+        .reviews-list {
+            margin-top: 30px;
+        }
+        .review-item {
+            border-bottom: 1px solid var(--border);
+            padding: 25px 0;
+        }
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .username {
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .review-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .review-stars {
+            color: #f1c40f;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .review-text {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .review-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .review-actions {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .shop-response {
+            background: #f4f7f9;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            border-left: 3px solid var(--primary);
+        }
+        .shop-name {
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .shop-text {
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .filter-reviews {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 992px) {
+            .product-main { grid-template-columns: 1fr; }
+            .product-images { max-width: 500px; margin: 0 auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- STICKY HEADER WRAPPER -->
+    <div class="sticky-header" id="stickyHeader">
+        <!-- HEADER -->
+        <header>
+            <div class="container header-main">
+                <a href="index.html" class="logo">Q&<span>H SKINLAB</span></a>
+                
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Tìm sản phẩm, danh mục hay thương hiệu mong muốn">
+                    <button class="search-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </button>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="hotline-info" id="headerHotline">Hotline: 1900 636 510</div>
+                    <div class="action-item" id="adminPanelBtn" style="display: none; color: var(--primary); font-weight: 800; border: 1px solid var(--primary); padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                        ADMIN PANEL
+                    </div>
+                    <div class="action-item" id="accountTrigger">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span id="userNameDisplay" class="user-name-display"></span>
+                    </div>
+                    <div class="action-item" id="cartTrigger">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        <span class="cart-badge" id="cartBadge">0</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- NAVIGATION -->
+        <div class="nav-wrap">
+            <div class="container">
+                <ul class="nav-list">
+                    <li class="nav-link nav-cat-trigger" style="display: flex; align-items: center; gap: 12px; width: 280px; background: #f8f9fa; padding-left: 15px; position: relative;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        DANH MỤC SẢN PHẨM
+                        <!-- SIDEBAR DROPDOWN -->
+                        <aside class="side-menu">
+                            <ul class="side-nav-list">
+                                <li class="side-nav-item" onclick="location.href='category.html?type=makeup'"><span>💄</span> Trang điểm</li>
+                                <li class="side-nav-item" onclick="location.href='category.html?type=skincare'"><span>🧴</span> Chăm sóc da mặt</li>
+                                <li class="side-nav-item" onclick="location.href='category.html?type=bodycare'"><span>🧼</span> Chăm sóc cơ thể</li>
+                                <li class="side-nav-item" onclick="location.href='category.html?type=haircare'"><span>💆‍♀️</span> Chăm sóc tóc & da đầu</li>
+                                <li class="side-nav-item" onclick="location.href='category.html?type=perfume'"><span>🌸</span> Nước hoa</li>
+                                <li class="side-nav-item sub-item"><span>✨</span> TẠO KHỐI/ HIGHLIGHTER</li>
+                                <li class="side-nav-item sub-item"><span>🎨</span> CHE KHUYẾT ĐIỂM</li>
+                                <li class="side-nav-item sub-item"><span>🖌️</span> KEM LÓT</li>
+                            </ul>
+                        </aside>
+                    </li>
+                    <li class="nav-link" onclick="location.href='category.html?type=makeup'">TRANG ĐIỂM</li>
+                    <li class="nav-link" onclick="location.href='category.html?type=skincare'">CHĂM SÓC DA</li>
+                    <li class="nav-link" onclick="location.href='category.html?type=new'">NEW</li>
+                    <li class="nav-link" onclick="location.href='category.html?type=combo'">COMBO CHĂM DA 💗</li>
+                    <li class="nav-link" onclick="location.href='category.html?type=brands'">THƯƠNG HIỆU</li>
+                    <li class="nav-link" onclick="location.href='category.html?type=magazine'">TẠP CHÍ LÀM ĐẸP</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <main class="container">
+        <!-- BREADCRUMB -->
+        <div class="breadcrumb" id="pdBreadcrumb">
+            <a href="/">Trang chủ</a> <span>/</span>
+            <span class="breadcrumb-item" id="breadCat">Danh mục</span> <span>/</span>
+            <span id="breadName">Sản phẩm</span>
+        </div>
+
+        <!-- PRODUCT MAIN SECTION -->
+        <div class="product-main">
+            <!-- Left: Images -->
+            <div class="product-images">
+                <div class="main-image-wrap">
+                    <img id="mainImg" src="" alt="Product Image" referrerPolicy="no-referrer">
+                </div>
+                <div class="thumbnail-list"> 
+                </div>
+            </div>
+
+            <!-- Right: Info -->
+            <div class="product-info">
+                <a href="#" class="pd-brand-link">...</a>
+                <h1 class="pd-name">Đang tải sản phẩm...</h1>
+                
+                <div class="pd-meta">
+                    <div class="pd-rating">
+                        <span class="stars">★★★★★</span>
+                        <span>(0 đánh giá)</span>
+                    </div>
+                    <div class="pd-divider">|</div>
+                    <div>Chưa có hỏi đáp</div>
+                    <div class="pd-divider">|</div>
+                    <div style="font-weight: 600;">0 Đã bán</div>
+                </div>
+
+                <div class="pd-price-container">
+                    <div class="pd-price-val">
+                        <span class="pd-current-price"></span>
+                        <span class="pd-old-price"></span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <span class="pd-discount-tag">-15%</span>
+                        <span style="background: #ff9f43; color: white; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 12px;">GIFT</span>
+                    </div>
+                </div>
+
+                <div class="pd-selection">
+                    <div style="display: flex; align-items: center; gap: 15px; font-size: 14px;">
+                        <span>Mã giảm giá:</span>
+                        <div style="display: flex; gap: 10px;">
+                            <span style="background: #e6f2ff; color: var(--primary); border: 1px dashed var(--primary); padding: 4px 12px; border-radius: 4px; font-weight: 700; font-size: 12px;">Giảm 10%</span>
+                            <span style="background: #e6f2ff; color: var(--primary); border: 1px dashed var(--primary); padding: 4px 12px; border-radius: 4px; font-weight: 700; font-size: 12px;">Giảm 12%</span>
+                        </div>
+                    </div>
+
+                    <div class="pd-qty-selector">
+                        <span>Số lượng</span>
+                        <div class="qty-box">
+                            <button onclick="window.changeQty(-1)">-</button>
+                            <input type="number" id="pdQty" value="1" min="1">
+                            <button onclick="window.changeQty(1)">+</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; align-items: stretch;">
+                        <div class="pd-buttons" style="flex: 1;">
+                            <button class="btn-pd-buy btn-buy-now">Mua Online</button>
+                            <button class="btn-pd-cart btn-add-to-cart">Thêm vào giỏ hàng</button>
+                        </div>
+                        <button class="btn-pd-favorite" id="pdFavBtn" title="Thêm vào yêu thích">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pd-promo-list" id="pdPromoList">
+                    <div class="promo-item">
+                        <div class="promo-title">🎁 QUÀ TẶNG KHUYẾN MÃI</div>
+                        <div class="promo-body">
+                            <img src="https://picsum.photos/seed/gift1/50/50" alt="Gift" referrerPolicy="no-referrer">
+                            <div>Ưu đãi đặc biệt: Tặng kèm mẫu thử cao cấp cho mọi đơn hàng từ 500k.</div>
+                        </div>
+                    </div>
+                    <div class="promo-item">
+                        <div class="promo-title">🎁 HÓA ĐƠN LA ROCHE-POSAY 399K</div>
+                        <div class="promo-body">
+                            <img src="https://picsum.photos/seed/gift2/50/50" alt="Gift" referrerPolicy="no-referrer">
+                            <div>Miễn phí vận chuyển toàn quốc cho đơn hàng từ 250,000đ.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCT DETAILS SECTION -->
+        <div class="pd-details-section">
+            <h2 class="pd-section-title">Chi tiết sản phẩm</h2>
+            <ul class="pd-spec-list" id="pdSpecList"></ul>
+
+            <div class="pd-content-text" id="pdContentText">
+                <p>Đang tải nội dung chi tiết...</p>
+            </div>
+        </div>
+
+        <!-- REVIEWS SECTION -->
+        <div class="pd-reviews-section">
+            <h2 class="pd-section-title">Đánh giá sản phẩm</h2>
+            <div class="review-summary">
+                <div class="score-box">
+                    <div class="big-score">5.0</div>
+                    <div class="stars-row">★★★★★</div>
+                    <div style="font-size: 13px; color: var(--text-muted);">525 đánh giá</div>
+                </div>
+                <div class="review-bars">
+                    <div class="bar-item">
+                        <span>5 sao</span>
+                        <div class="bar-bg"><div class="bar-fill" style="width: 98%"></div></div>
+                        <span>518</span>
+                    </div>
+                    <div class="bar-item">
+                        <span>4 sao</span>
+                        <div class="bar-bg"><div class="bar-fill" style="width: 2%"></div></div>
+                        <span>7</span>
+                    </div>
+                    <div class="bar-item">
+                        <span>3 sao</span>
+                        <div class="bar-bg"><div class="bar-fill" style="width: 0%"></div></div>
+                        <span>0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-reviews">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                Lọc đánh giá
+            </div>
+
+            <!-- ADD REVIEW FORM -->
+            <div id="addReviewForm" style="display: none; margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                <h3 style="margin-bottom: 15px; font-size: 18px;">Thêm đánh giá sản phẩm</h3>
+                <form id="reviewForm">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Đánh giá sao:</label>
+                        <div class="star-rating">
+                            <input type="radio" id="star5" name="rating" value="5"><label for="star5">★</label>
+                            <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
+                            <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
+                            <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
+                            <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="reviewText" style="display: block; margin-bottom: 5px; font-weight: 600;">Nội dung đánh giá:</label>
+                        <textarea id="reviewText" rows="4" placeholder="Hãy chia sẻ trải nghiệm của bạn về sản phẩm..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+                    </div>
+                    <button type="submit" style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Gửi đánh giá</button>
+                </form>
+            </div>
+
+            <div class="reviews-list">
+                <!-- Reviews will be loaded dynamically -->
+            </div>
+        </div>
+
+        <!-- RELATED PRODUCTS SECTION -->
+        <div class="pd-related-section" style="margin-top: 30px; background: var(--white); padding: 30px; border-radius: 8px;">
+            <h2 class="pd-section-title">Có thể bạn cũng thích</h2>
+            <div class="products-grid" id="relatedProductsGrid" style="grid-template-columns: repeat(4, 1fr); margin-top: 20px;">
+                <!-- Related products will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="margin-top: 50px;">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4>Về chúng tôi</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">Câu chuyện thương hiệu</a></li>
+                        <li><a href="about.html">Hệ thống cửa hàng</a></li>
+                        <li><a href="about.html">Tuyển dụng</a></li>
+                        <li><a href="contact.html">Liên hệ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Chính sách</h4>
+                    <ul class="footer-links">
+                        <li><a href="policy.html">Chính sách bảo mật</a></li>
+                        <li><a href="policy.html">Điều khoản sử dụng</a></li>
+                        <li><a href="policy.html">Chính sách đổi trả</a></li>
+                        <li><a href="policy.html">Chính sách vận chuyển</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Hỗ trợ khách hàng</h4>
+                    <ul class="footer-links">
+                        <li><a href="support.html">Hướng dẫn mua hàng</a></li>
+                        <li><a href="support.html">Phương thức thanh toán</a></li>
+                        <li><a href="support.html">Câu hỏi thường gặp</a></li>
+                        <li><a href="support.html">Tra cứu đơn hàng</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Kết nối với chúng tôi</h4>
+                    <div style="display: flex; gap: 15px; margin-top: 10px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 Q&H SKINLAB. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- 1. CART DRAWER (Giữ lại vì script.js không inject cái này) -->
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <h3 style="font-weight: 800; text-transform: uppercase;">Giỏ hàng</h3>
+            <span style="cursor: pointer; font-size: 24px;" id="closeCart">&times;</span>
+        </div>
+        <div class="cart-items" id="cartItems"></div>
+        <div style="padding-top: 20px; border-top: 1px solid var(--border);">
+            <div class="flex-between" style="font-weight: 800; font-size: 18px; margin-bottom: 20px;">
+                <span>Tổng tiền:</span>
+                <span id="cartTotal">0đ</span>
+            </div>
+            <button id="checkoutBtn" style="width: 100%; padding: 15px; background: var(--primary); border: none; font-weight: 800; cursor: pointer; color: white;">THANH TOÁN NGAY</button>
+        </div>
+    </div>
+
+    <!-- (Các Modal/Overlay khác đã được script.js inject tự động) -->
+
+    <script src="/script.js"></script>
+    <script>
+        function initProductDetail() {
+            const selectedId = localStorage.getItem('selectedProductId');
+            if (!selectedId) return;
+
+            // Ưu tiên lấy data đầy đủ đã lưu ở bước trước đó
+            let product = null;
+            const cachedData = localStorage.getItem('selectedProductData');
+            if (cachedData) product = JSON.parse(cachedData);
+
+            // Nếu không có cache, tìm trong danh sách products (có thể đang load)
+            if (!product || (product._id || product.id).toString() !== selectedId.toString()) {
+                const allProds = (typeof window.getProducts === 'function') ? window.getProducts() : [];
+                product = allProds.find(p => (p._id || p.id).toString() === selectedId.toString());
+            }
+            
+            if (product) {
+                // Update Basic Info
+                document.querySelector('.pd-name').innerText = product.name;
+                document.querySelector('.pd-brand-link').innerText = product.brand.toUpperCase() + ' >';
+                document.querySelector('.pd-current-price').innerText = product.price.toLocaleString() + 'đ';
+                document.querySelector('.pd-old-price').innerText = product.oldPrice.toLocaleString() + 'đ';
+                document.querySelector('.pd-discount-tag').innerText = '-' + product.discount;
+                
+                // Update Breadcrumb
+                if (document.getElementById('breadCat')) {
+                    document.getElementById('breadCat').innerText = product.category.toUpperCase();
+                    document.getElementById('breadCat').onclick = () => {
+                        window.location.href = `category?type=${product.category}`;
+                    };
+                }
+                if (document.getElementById('breadName')) {
+                    document.getElementById('breadName').innerText = product.name;
+                }
+
+                // Update Sold count
+                const soldEl = document.querySelector('.pd-meta div:last-child');
+                if (soldEl) soldEl.innerText = (product.sold >= 1000 ? (product.sold/1000).toFixed(1) + 'k' : product.sold) + ' Đã bán';
+
+                // Update Images logic for better stability
+                const mainImgEl = document.getElementById('mainImg');
+                const thumbnailListEl = document.querySelector('.thumbnail-list');
+                
+                // 1. Tạo danh sách ảnh hiển thị (Ưu tiên mảng images, nếu không có dùng image chính)
+                let displayImages = [];
+                if (Array.isArray(product.images) && product.images.filter(img => img).length > 0) {
+                    displayImages = product.images.filter(img => img);
+                } else if (product.image) {
+                    displayImages = [product.image];
+                } else {
+                    // Ảnh mặc định nếu sản phẩm hoàn toàn không có ảnh
+                    displayImages = ['https://via.placeholder.com/800x800?text=Q%26H+SKINLAB'];
+                }
+
+                // 2. Cập nhật ảnh chính
+                mainImgEl.src = displayImages[0];
+                mainImgEl.onerror = function() { this.src = 'https://via.placeholder.com/800x800?text=Image+Error'; };
+                
+                // 3. Render thumbnails (Chỉ hiện nếu có nhiều hơn 1 ảnh)
+                thumbnailListEl.innerHTML = '';
+                if (displayImages.length > 1) {
+                    displayImages.forEach((imgSrc, index) => {
+                        const thumbItem = document.createElement('div');
+                        thumbItem.className = `thumb-item ${index === 0 ? 'active' : ''}`;
+                        thumbItem.innerHTML = `<img src="${imgSrc}" referrerPolicy="no-referrer" onerror="this.src='https://via.placeholder.com/80x80?text=Error'">`;
+                        thumbItem.addEventListener('click', function() {
+                            const activeThumb = thumbnailListEl.querySelector('.thumb-item.active');
+                            if (activeThumb) activeThumb.classList.remove('active');
+                            this.classList.add('active');
+                            mainImgEl.src = imgSrc;
+                        });
+                        thumbnailListEl.appendChild(thumbItem);
+                    });
+                }
+
+                // Update Specs
+                const specList = document.getElementById('pdSpecList');
+                if (specList && product.specs) {
+                    specList.innerHTML = `
+                        <li><strong>Tên sản phẩm:</strong> ${product.name}</li>
+                        ${Object.entries(product.specs).map(([key, val]) => `<li><strong>${key}:</strong> ${val}</li>`).join('')}
+                    `;
+                }
+
+                // Favorite Button Logic
+                const favBtn = document.getElementById('pdFavBtn');
+                if (favBtn) {
+                    favBtn.onclick = () => window.toggleFavorite(product._id || product.id);
+                }
+
+                // Update Description/Details
+                const descText = document.getElementById('pdContentText');
+                const detailedContent = product.details || product.description;
+                
+                if (descText && detailedContent) {
+                    descText.innerHTML = `
+                        <h4>1. Thông tin sản phẩm</h4>
+                        <p>${detailedContent}</p>
+                        <h4>2. Đặc điểm nổi bật</h4>
+                        <p>Sản phẩm chính hãng, được phân phối trực tiếp từ thương hiệu. Đảm bảo chất lượng và an toàn cho người sử dụng.</p>
+                    `;
+                } else if (descText) {
+                    descText.innerHTML = `<p>Thông tin chi tiết về sản phẩm đang được cập nhật.</p>`;
+                }
+
+                // Update Buy/Cart Buttons
+                const buyBtn = document.querySelector('.btn-buy-now');
+                if (buyBtn) {
+                    buyBtn.onclick = () => window.buyNow(product._id || product.id);
+                }
+
+                const cartBtn = document.querySelector('.btn-add-to-cart');
+                if (cartBtn) {
+                    cartBtn.onclick = () => window.addToCart(product._id || product.id);
+                }
+
+                // Lưu sản phẩm đã xem
+                if (typeof trackProductView === 'function') trackProductView(product._id || product.id);
+
+                // Re-render reviews for this specific product
+                if (typeof renderReviews === 'function') renderReviews(product._id || product.id);
+
+                // Render related products
+                if (typeof renderRelatedProducts === 'function') renderRelatedProducts(product);
+            } else {
+                const name = localStorage.getItem('selectedProductName');
+                const image = localStorage.getItem('selectedProductImage');
+                if (name) document.querySelector('.pd-name').innerText = name;
+                if (image) document.getElementById('mainImg').src = image;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initProductDetail);
+        // Lắng nghe dữ liệu tải về từ server để cập nhật lại nếu cần
+        window.addEventListener('load', initProductDetail);
+
+        window.changeQty = function(val) {
+            const input = document.getElementById('pdQty');
+            let current = parseInt(input.value);
+            current += val;
+            if (current < 1) current = 1;
+            input.value = current;
+        };
+    </script>
+</body>
+</html>
+

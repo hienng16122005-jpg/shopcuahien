@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Về chúng tôi - Q&H SKINLAB</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .content-page {
+            padding: 60px 0;
+            line-height: 1.8;
+            color: var(--text);
+        }
+        .content-page h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 30px;
+            text-align: center;
+            color: var(--black);
+        }
+        .content-page h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+        }
+        .content-page p {
+            margin-bottom: 20px;
+        }
+        .brand-story {
+            background: #f9f9f9;
+            padding: 40px;
+            border-radius: 12px;
+            border-left: 5px solid var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- STICKY HEADER WRAPPER -->
+    <div class="sticky-header" id="stickyHeader">
+        <!-- HEADER -->
+        <header>
+            <div class="container header-main">
+                <a href="index.html" class="logo">Q&<span>H SKINLAB</span></a>
+                
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Tìm sản phẩm, danh mục hay thương hiệu mong muốn">
+                    <button class="search-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </button>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="hotline-info" id="headerHotline">
+                        Hotline: 1900 636 510
+                    </div>
+                    <div class="action-item" id="adminPanelBtn" style="display: none; color: var(--primary); font-weight: 800; border: 1px solid var(--primary); padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                        ADMIN PANEL
+                    </div>
+                    <div class="action-item" id="accountTrigger">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span id="userNameDisplay" class="user-name-display"></span>
+                    </div>
+                    <div class="action-item" id="cartTrigger">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        <span class="cart-badge" id="cartBadge">0</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- NAVIGATION -->
+        <div class="nav-wrap">
+            <div class="container">
+                <ul class="nav-list">
+                    <li class="nav-link nav-cat-trigger" style="display: flex; align-items: center; gap: 12px; width: 280px; background: #f8f9fa; padding-left: 15px; position: relative;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        DANH MỤC SẢN PHẨM
+                        <!-- SIDEBAR DROPDOWN -->
+                        <aside class="side-menu">
+                            <ul class="side-nav-list">
+                                <li class="side-nav-item" onclick="location.href='category.html?type=trang-diem'"><span>💄</span> Trang điểm</li>
+                                <li class="side-nav-item" onclick="location.href='category.html?type=skincare'"><span>🧴</span> Chăm sóc da mặt</li>
+                                <li class="side-nav-item" onclick="location.href='category.html?type=bodycare'"><span>🧼</span> Chăm sóc cơ thể</li>
+                                <li class="side-nav-item" onclick="location.href='category.html?type=haircare'"><span>💆‍♀️</span> Chăm sóc tóc & da đầu</li>
+                                <li class="side-nav-item" onclick="location.href='category.html?type=perfume'"><span>🌸</span> Nước hoa</li>
+                                <li class="side-nav-item sub-item"><span>✨</span> TẠO KHỐI/ HIGHLIGHTER</li>
+                                <li class="side-nav-item sub-item"><span>🎨</span> CHE KHUYẾT ĐIỂM</li>
+                                <li class="side-nav-item sub-item"><span>🖌️</span> KEM LÓT</li>
+                            </ul>
+                        </aside>
+                    </li>
+                    <li class="nav-link" onclick="location.href='category.html?type=trang-diem'">TRANG ĐIỂM <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-left: 4px;"><path d="M6 9l6 6 6-6"></path></svg>
+                        <div class="nav-dropdown">
+                            <ul class="dropdown-list">
+                                <li class="dropdown-item">MẶT <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg></li>
+                                <li class="dropdown-item">MẮT <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg></li>
+                                <li class="dropdown-item">MÔI <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-link" onclick="location.href='category.html?type=skincare'">CHĂM SÓC DA <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-left: 4px;"><path d="M6 9l6 6 6-6"></path></svg></li>
+                    <li class="nav-link" onclick="location.href='category.html?type=new'">NEW</li>
+                    <li class="nav-link" onclick="location.href='category.html?type=haircare'">CHĂM SÓC TÓC</li>
+                    <li class="nav-link" onclick="location.href='category.html?type=brands'">THƯƠNG HIỆU</li>
+                    <li class="nav-link" onclick="location.href='magazine.html'">TẠP CHÍ LÀM ĐẸP <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-left: 4px;"><path d="M6 9l6 6 6-6"></path></svg>
+                        <div class="mega-menu">
+                            <div class="mega-col">
+                                <ul class="mega-list">
+                                    <li onclick="location.href='magazine.html?topic=review'">Review Mỹ Phẩm</li><li>Trẻ Hoá Làn Da</li><li>Thiết Bị Làm Đẹp</li>
+                                </ul>
+                            </div>
+                            <div class="mega-col">
+                                <ul class="mega-list">
+                                    <li onclick="location.href='magazine.html?topic=top-products'">Top Mỹ Phẩm</li><li>Làm Mờ Sạm Nám</li><li>Thực Phẩm Chức Năng</li>
+                                </ul>
+                            </div>
+                            <div class="mega-col">
+                                <ul class="mega-list">
+                                    <li onclick="location.href='magazine.html?topic=makeup-tips'">Hướng Dẫn Trang Điểm</li><li>Trắng Da</li>
+                                </ul>
+                            </div>
+                            <div class="mega-col">
+                                <ul class="mega-list">
+                                    <li>Chăm Sóc Da Body</li><li>Trị Thâm Mụn</li>
+                                </ul>
+                            </div>
+                            <div class="mega-col">
+                                <ul class="mega-list">
+                                    <li onclick="location.href='magazine.html?topic=skincare-tips'">Chăm Sóc Da Mặt</li><li>Nước Hoa</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <main class="container content-page">
+        <h1>VỀ CHÚNG TÔI</h1>
+        
+        <div class="brand-story">
+            <h2>Câu chuyện thương hiệu</h2>
+            <p>Tại Q&H SKINLAB, chúng tôi tin rằng vẻ đẹp thực sự không đến từ những lớp trang điểm dày cộm, mà bắt nguồn từ một làn da khỏe mạnh và rạng rỡ tự nhiên. Hành trình của chúng tôi bắt đầu từ niềm đam mê khám phá những tinh túy từ thiên nhiên kết hợp cùng công nghệ khoa học tiên tiến.</p>
+            <p>Chúng tôi không chỉ bán mỹ phẩm, chúng tôi mang đến giải pháp chăm sóc da toàn diện, giúp mỗi khách hàng tự tin hơn với vẻ đẹp độc bản của chính mình. Mỗi sản phẩm tại Q&H SKINLAB đều được tuyển chọn khắt khe, đảm bảo sự an toàn và hiệu quả tối ưu cho làn da Á Đông.</p>
+        </div>
+
+        <h2>Hệ thống cửa hàng</h2>
+        <p>Hiện nay, Q&H SKINLAB đã có mặt tại các vị trí đắc địa để phục vụ quý khách hàng tốt nhất:</p>
+        <ul>
+            <li><strong>Chi nhánh 1:</strong> 123 Lạch Tray, Ngô Quyền, Hải Phòng.</li>
+            <li><strong>Chi nhánh 2:</strong> 456 Lê Hồng Phong, Hải An, Hải Phòng.</li>
+        </ul>
+
+        <h2>Tuyển dụng</h2>
+        <p>Q&H SKINLAB luôn chào đón những tâm hồn yêu cái đẹp và đầy nhiệt huyết gia nhập đội ngũ. Chúng tôi đang tìm kiếm các vị trí:</p>
+        <ul>
+            <li>Nhân viên tư vấn mỹ phẩm (Full-time/Part-time)</li>
+            <li>Chuyên viên Marketing Online</li>
+            <li>Nhân viên kho và đóng gói</li>
+        </ul>
+        <p>Gửi CV về email: <strong>Q&H@gmail.com</strong> để ứng tuyển ngay hôm nay!</p>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4>Về chúng tôi</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">Câu chuyện thương hiệu</a></li>
+                        <li><a href="about.html">Hệ thống cửa hàng</a></li>
+                        <li><a href="about.html">Tuyển dụng</a></li>
+                        <li><a href="contact.html">Liên hệ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Chính sách</h4>
+                    <ul class="footer-links">
+                        <li><a href="policy.html">Chính sách bảo mật</a></li>
+                        <li><a href="policy.html">Điều khoản sử dụng</a></li>
+                        <li><a href="policy.html">Chính sách đổi trả</a></li>
+                        <li><a href="policy.html">Chính sách vận chuyển</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Hỗ trợ khách hàng</h4>
+                    <ul class="footer-links">
+                        <li><a href="support.html">Hướng dẫn mua hàng</a></li>
+                        <li><a href="support.html">Phương thức thanh toán</a></li>
+                        <li><a href="support.html">Câu hỏi thường gặp</a></li>
+                        <li><a href="support.html">Tra cứu đơn hàng</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Kết nối với chúng tôi</h4>
+                    <div style="display: flex; gap: 15px; margin-top: 10px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 Q&H SKINLAB Clone. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- CART DRAWER -->
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <h3 style="font-weight: 800; text-transform: uppercase;">Giỏ hàng</h3>
+            <span style="cursor: pointer; font-size: 24px;" id="closeCart">&times;</span>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- JS Render -->
+        </div>
+        <div style="padding-top: 20px; border-top: 1px solid var(--border);">
+            <div class="flex-between" style="font-weight: 800; font-size: 18px; margin-bottom: 20px;">
+                <span>Tổng tiền:</span>
+                <span id="cartTotal">0đ</span>
+            </div>
+            <button id="checkoutBtn" style="width: 100%; padding: 15px; background: var(--primary); border: none; font-weight: 800; cursor: pointer;">THANH TOÁN NGAY</button>
+        </div>
+    </div>
+
+    <!-- CHECKOUT OVERLAY -->
+    <div class="admin-overlay" id="checkoutOverlay" style="z-index: 11000; background: #f4f4f4;">
+        <div style="background: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100;">
+            <h1 style="font-size: 24px; font-weight: 900; letter-spacing: -1px; margin: 0; cursor: pointer;" onclick="document.getElementById('checkoutOverlay').classList.remove('active')">Q&H SKINLAB</h1>
+            <div style="display: flex; align-items: center; gap: 10px; color: #666; font-size: 14px; font-weight: 600;">
+                <span>Thanh toán an toàn</span>
+                <div style="width: 1px; height: 20px; background: #ddd;"></div>
+                <button id="closeCheckoutBtn" style="background: none; border: none; cursor: pointer; font-size: 20px; color: #333;">&times;</button>
+            </div>
+        </div>
+
+        <div class="admin-container" style="max-width: 1100px; margin: 40px auto; padding: 0 20px;">
+            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 30px; align-items: start;">
+                <!-- Left: Shipping Info -->
+                <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 30px; position: relative; display: inline-block;">
+                        Thông tin giao hàng
+                        <div style="position: absolute; bottom: -8px; left: 0; width: 100%; height: 4px; background: #5dade2;"></div>
+                    </h2>
+                    
+                    <form id="checkoutForm" style="margin-top: 20px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #333;">Họ và tên</label>
+                            <input type="text" id="orderName" placeholder="Nhập họ tên người nhận" required style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 4px; background: #fafafa;">
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #333;">Số điện thoại</label>
+                                <input type="tel" id="orderPhone" placeholder="090x xxx xxx" required style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 4px; background: #fafafa;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #333;">Email</label>
+                                <input type="email" id="orderEmail" placeholder="email@vi-du.com" required style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 4px; background: #fafafa;">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #333;">Địa chỉ nhận hàng</label>
+                            <textarea id="orderAddress" placeholder="Số nhà, tên đường, phường/xã..." required style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 4px; background: #fafafa; min-height: 80px; font-family: inherit;"></textarea>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #333;">Phương thức thanh toán</label>
+                            <select id="orderPaymentMethod" style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 4px; background: #fafafa; font-family: inherit; cursor: pointer;">
+                                <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+                                <option value="BANK">Chuyển khoản ngân hàng</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #333;">Ghi chú (tùy chọn)</label>
+                            <textarea id="orderNote" placeholder="Ghi chú thêm cho đơn hàng..." style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 4px; background: #fafafa; min-height: 80px; font-family: inherit;"></textarea>
+                        </div>
+                    </form>
+                    
+                    <!-- QR Payment View -->
+                    <div id="checkoutQR" style="display: none; text-align: center; padding: 20px 0;">
+                        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 20px; color: #333;">THANH TOÁN CHUYỂN KHOẢN</h2>
+                        <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Vui lòng quét mã QR bên dưới để thanh toán đơn hàng.</p>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; margin-bottom: 20px;">
+                            <img id="qrCodeImg" src="" alt="QR Code" style="width: 250px; height: 250px; object-fit: contain; margin-bottom: 15px;">
+                            <div style="text-align: left; font-size: 14px; line-height: 1.6;">
+                                <p><strong>Chủ tài khoản:</strong> Nguyễn Thị Thanh Hiền</p>
+                                <p><strong>Số tài khoản:</strong> 1234567890</p>
+                                <p><strong>Ngân hàng:</strong> Vietcombank</p>
+                                <p><strong>Số tiền:</strong> <span id="qrAmount" style="color: var(--red); font-weight: 800;">0đ</span></p>
+                                <p><strong>Nội dung:</strong> <span id="qrNote" style="color: var(--primary); font-weight: 700;">QH123456</span></p>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px; justify-content: center;">
+                            <button id="cancelQRBtn" style="padding: 12px 25px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 6px; font-weight: 700; cursor: pointer;">QUAY LẠI</button>
+                            <button id="confirmQRBtn" style="padding: 12px 25px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">XÁC NHẬN ĐÃ CHUYỂN</button>
+                        </div>
+                    </div>
+
+                    <!-- Success View -->
+                    <div id="checkoutSuccess" style="display: none; text-align: center; padding: 40px 0;">
+                        <div style="width: 80px; height: 80px; background: #e8f5e9; color: #2e7d32; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <h2 style="font-size: 28px; font-weight: 900; color: #333; margin-bottom: 10px;">ĐẶT HÀNG THÀNH CÔNG!</h2>
+                        <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Cảm ơn bạn đã tin tưởng lựa chọn Q&H SKINLAB. Đơn hàng của bạn đang được xử lý.</p>
+                        
+                        <div style="background: #f9f9f9; padding: 25px; border-radius: 8px; text-align: left; margin-bottom: 30px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                                <span style="font-weight: 700; color: #333;">Mã đơn hàng:</span>
+                                <span id="successOrderId" style="font-weight: 800; color: var(--primary);">#123456</span>
+                            </div>
+                            <div id="successOrderItems" style="margin-bottom: 15px;">
+                                <!-- JS Render -->
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px dashed #ddd;">
+                                <span style="font-weight: 800; color: #333;">TỔNG CỘNG:</span>
+                                <span id="successOrderTotal" style="font-weight: 900; color: var(--red); font-size: 18px;">0đ</span>
+                            </div>
+                        </div>
+
+                        <button onclick="document.getElementById('checkoutOverlay').classList.remove('active')" style="padding: 15px 40px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; text-transform: uppercase;">TIẾP TỤC MUA SẮM</button>
+                    </div>
+                </div>
+
+                <!-- Right: Order Summary -->
+                <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 100px;">
+                    <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 30px; position: relative; display: inline-block;">
+                        Đơn hàng của bạn
+                        <div style="position: absolute; bottom: -8px; left: 0; width: 100%; height: 4px; background: #5dade2;"></div>
+                    </h2>
+                    
+                    <div id="checkoutSummaryItems" style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+                        <!-- JS Render -->
+                    </div>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <div class="flex-between" style="margin-bottom: 12px; color: #333; font-weight: 500;">
+                            <span>Tạm tính:</span>
+                            <span id="checkoutSubtotal" style="font-weight: 600;">0đ</span>
+                        </div>
+                        <div class="flex-between" style="margin-bottom: 12px; color: #333; font-weight: 500;">
+                            <span>Phí vận chuyển:</span>
+                            <span style="font-weight: 600;">Miễn phí</span>
+                        </div>
+                        <div class="flex-between" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                            <span style="font-size: 18px; font-weight: 800; color: var(--red);">TỔNG CỘNG:</span>
+                            <span id="checkoutTotal" style="font-size: 22px; font-weight: 900; color: var(--red);">0đ</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" form="checkoutForm" style="width: 100%; padding: 20px; background: #5dade2; color: white; border: none; border-radius: 6px; font-weight: 800; font-size: 18px; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;">
+                        HOÀN TẤT ĐẶT HÀNG
+                    </button>
+                    
+                    <p style="text-align: center; font-size: 12px; color: #999; margin-top: 20px; line-height: 1.5;">
+                        Bằng cách đặt hàng, bạn đồng ý với điều khoản của chúng tôi.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BACK TO TOP -->
+    <div class="back-to-top" id="backToTop">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div class="modal-overlay" id="loginModalOverlay">
+        <div class="login-modal">
+            <span class="close-modal" id="closeLogin">&times;</span>
+            <div id="loginView">
+                <h2>Đăng nhập</h2>
+                <form class="login-form" id="loginForm">
+                <input type="text" placeholder="Email hoặc Tên đăng nhập" required>
+                <input type="password" placeholder="Mật khẩu" required>
+                
+                <div class="login-options">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox"> Ghi nhớ đăng nhập
+                    </label>
+                    <a href="#">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="btn-login">Đăng nhập</button>
+                
+                    <div class="register-section">
+                        <p>Tạo tài khoản ngay</p>
+                        <button type="button" class="btn-register" id="toRegister">Đăng ký</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Register View -->
+            <div id="registerView" style="display: none;">
+                <h2>Đăng ký</h2>
+                <form class="login-form" id="registerForm">
+                    <input type="text" placeholder="Họ và tên" required>
+                    <input type="email" placeholder="Email" required>
+                    <input type="password" placeholder="Mật khẩu" required>
+                    <input type="password" placeholder="Nhập lại mật khẩu" required>
+                    
+                    <button type="submit" class="btn-login">Đăng ký</button>
+                    
+                    <div class="register-section">
+                        <p>Đã có tài khoản?</p>
+                        <button type="button" class="btn-register" id="toLogin">Đăng nhập</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- PROFILE OVERLAY -->
+    <div class="admin-overlay" id="profileOverlay" style="z-index: 12000; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center;">
+        <div style="width: 1000px; height: 600px; background: white; border-radius: 8px; display: flex; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative;">
+            <!-- Close Button -->
+            <button onclick="document.getElementById('profileOverlay').classList.remove('active'); document.getElementById('profileOverlay').style.display='none';" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #888; z-index: 10;">&times;</button>
+            
+            <!-- Sidebar -->
+            <div style="width: 250px; background: #fafafa; border-right: 1px solid #eee; padding: 30px 0; display: flex; flex-direction: column;">
+                <!-- User Header -->
+                <div style="padding: 0 25px 30px; border-bottom: 1px solid #eee; margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div id="profileAvatar" style="width: 50px; height: 50px; background: var(--red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px;">NH</div>
+                        <div style="overflow: hidden;">
+                            <div id="profileUserName" style="font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Nguyen Hien</div>
+                            <div id="profileUserEmail" style="font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">hien161205@gmail.com</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Menu Items -->
+                <div class="profile-menu" style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <div class="profile-menu-item active" data-tab="info" onclick="switchProfileTab('info')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        Thông tin
+                    </div>
+                    <div class="profile-menu-item" data-tab="orders" onclick="switchProfileTab('orders')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        Quản lý đơn hàng
+                    </div>
+                    <div class="profile-menu-item" data-tab="vouchers" onclick="switchProfileTab('vouchers')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="7" y1="16" x2="13" y2="16"></line></svg>
+                        Mã giảm giá
+                    </div>
+                    <div class="profile-menu-item" data-tab="address" onclick="switchProfileTab('address')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        Địa chỉ
+                    </div>
+                    <div class="profile-menu-item" data-tab="viewed" onclick="switchProfileTab('viewed')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                        Sản phẩm đã xem
+                    </div>
+                    <div class="profile-menu-item" data-tab="favorites" onclick="switchProfileTab('favorites')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        Sản phẩm yêu thích
+                    </div>
+                    <div class="profile-menu-item logout" onclick="logoutUser()" style="margin-top: auto; border-top: 1px solid #eee;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        Đăng xuất
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div style="flex-grow: 1; padding: 40px; background: #fff; overflow-y: auto;">
+                <div id="profileTabContent">
+                    <!-- Dynamic Content -->
+                    <div id="tab-info" class="profile-tab-pane active">
+                        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--primary);">Thông tin cá nhân</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <label style="display: block; font-size: 13px; color: #888; margin-bottom: 5px;">Họ và tên</label>
+                                <div id="infoName" style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 600;">Nguyen Hien</div>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 13px; color: #888; margin-bottom: 5px;">Email</label>
+                                <div id="infoEmail" style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 600;">hien161205@gmail.com</div>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 13px; color: #888; margin-bottom: 5px;">Số điện thoại</label>
+                                <div style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 600;">Chưa cập nhật</div>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 13px; color: #888; margin-bottom: 5px;">Ngày sinh</label>
+                                <div style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 600;">Chưa cập nhật</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-orders" class="profile-tab-pane">
+                        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--primary);">Quản lý đơn hàng</h2>
+                        
+                        <div class="order-tabs">
+                            <div class="order-tab active" onclick="switchOrderTab(this, 'Chờ xác nhận')">Chờ xác nhận</div>
+                            <div class="order-tab" onclick="switchOrderTab(this, 'Chờ lấy hàng')">Chờ lấy hàng</div>
+                            <div class="order-tab" onclick="switchOrderTab(this, 'Đang giao')">Đang giao</div>
+                            <div class="order-tab" onclick="switchOrderTab(this, 'Đã giao')">Đã giao</div>
+                            <div class="order-tab" onclick="switchOrderTab(this, 'Đã huỷ')">Đã huỷ</div>
+                        </div>
+
+                        <div id="profileOrdersList" style="color: #888;">Bạn chưa có đơn hàng nào.</div>
+                    </div>
+
+                    <div id="tab-vouchers" class="profile-tab-pane">
+                        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--primary);">Mã giảm giá</h2>
+                        <div style="color: #888;">Hiện tại không có mã giảm giá khả dụng.</div>
+                    </div>
+
+                    <div id="tab-address" class="profile-tab-pane">
+                        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--primary);">Địa chỉ của tôi</h2>
+                        <div style="color: #888;">Chưa có địa chỉ nào được lưu.</div>
+                    </div>
+
+                    <div id="tab-viewed" class="profile-tab-pane">
+                        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--primary);">Sản phẩm đã xem</h2>
+                        <div style="color: #888;">Chưa có sản phẩm nào.</div>
+                    </div>
+
+                    <div id="tab-favorites" class="profile-tab-pane">
+                        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--primary);">Sản phẩm yêu thích</h2>
+                        <div style="color: #888;">Chưa có sản phẩm nào.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/script.js"></script>
+</body>
+</html>

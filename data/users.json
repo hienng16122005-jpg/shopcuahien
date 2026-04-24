@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1776955636675",
+    "email": "admin@qh.com",
+    "password": "$2a$10$Tx8d351Lj.g.aQ0ZlgaVMOnVLm5VYPZZIZoWF6AsDVk.PLsx/7sfa",
+    "name": "admin",
+    "role": "Quản trị viên",
+    "createdAt": "2026-04-23T14:47:16.675Z"
+  },
+  {
+    "id": "1776956117036",
+    "name": "Nguyễn Hiền",
+    "email": "hien123@gmail.com",
+    "password": "$2a$10$NudUMPuIJdfQ1zZ/V2BVmuVyGHTd6PoFXLWGgd7VWK6L47iDaW68S",
+    "role": "Khách hàng",
+    "createdAt": "2026-04-23T14:55:17.036Z"
+  }
+]
