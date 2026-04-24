@@ -1,8 +1,0 @@
-[
-  { "id": "1", "name": "Trang điểm", "slug": "trang-diem" },
-  { "id": "2", "name": "Chăm sóc da mặt", "slug": "skincare" },
-  { "id": "3", "name": "Chăm sóc cơ thể", "slug": "bodycare" },
-  { "id": "4", "name": "Chăm sóc tóc", "slug": "haircare" },
-  { "id": "5", "name": "Nước hoa", "slug": "perfume" },
-  { "id": "6", "name": "Combo tiết kiệm", "slug": "combo" }
-]

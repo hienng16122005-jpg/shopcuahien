@@ -7,6 +7,17 @@ const API_BASE_URL = '/api';
 
 // 2. STATE & GLOBALS
 let products = [];
+let isFirebaseActive = false;
+
+// Check if Firebase is configured
+if (typeof firebase !== 'undefined' && firebase.apps.length > 0 && 
+    firebase.app().options.apiKey !== "YOUR_API_KEY") {
+    isFirebaseActive = true;
+    console.log("Q&H: Firebase is ACTIVE and ready.");
+} else {
+    console.log("Q&H: Using Local API (Firebase not configured).");
+}
+
 try {
     const cached = localStorage.getItem('qh_products_cache');
     if (cached) products = JSON.parse(cached);
@@ -161,38 +172,74 @@ async function loadInitialData() {
     }
 
     try {
-        // 2. Chạy các fetch song song dùng fetch tiêu chuẩn
-        const configPromise = fetch('/api/config').then(r => r.ok ? r.json() : null).catch(() => null);
-        const productsPromise = fetch('/api/products').then(r => r.ok ? r.json() : null).catch(() => null);
-        const magazinePromise = fetch('/api/magazine').then(r => r.ok ? r.json() : null).catch(() => null);
+        if (isFirebaseActive) {
+            // FIREBASE FETCHING
+            const db = firebase.firestore();
+            
+            const [configSnap, productsSnap, magazineSnap] = await Promise.all([
+                db.collection('settings').doc('website').get(),
+                db.collection('products').get(),
+                db.collection('magazine').orderBy('createdAt', 'desc').get()
+            ]);
 
-        // Đợi cấu hình và sản phẩm trước (quan trọng nhất)
-        const [configData, prodData] = await Promise.all([configPromise, productsPromise]);
+            // Config Fallback
+            if (configSnap.exists) {
+                updateWebsiteConfig(configSnap.data());
+            } else {
+                fetch('/api/config').then(r => r.json()).then(updateWebsiteConfig).catch(() => {});
+            }
 
-        if (configData) {
-            console.log("Q&H: Đã tải Config", configData);
-            updateWebsiteConfig(configData);
-        }
-
-        if (prodData && Array.isArray(prodData)) {
-            console.log("Q&H: Đã tải", prodData.length, "sản phẩm");
-            products = prodData;
+            // Products Fallback
+            if (!productsSnap.empty) {
+                products = productsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, _id: doc.id }));
+            } else {
+                console.log("Q&H: Firebase products empty, falling back to local API.");
+                const localProd = await fetch('/api/products').then(r => r.json()).catch(() => []);
+                if (localProd.length > 0) products = localProd;
+            }
+            
             filteredProducts = [...products];
-            // ⭐ LỚI LẦN 1 FIX: LƯU PRODUCTS VÀO GLOBAL VARIABLE VÀ CACHE
             window.allProducts = products;
             localStorage.setItem('qh_products_cache', JSON.stringify(products));
-            
-            // Render lại ngay khi có sản phẩm mới từ server
             renderAllSections();
-        }
 
-        // Đợi bài viết magazine sau
-        const magData = await magazinePromise;
-        if (magData && Array.isArray(magData)) {
-            console.log("Q&H: Đã tải", magData.length, "bài viết");
-            magazinePosts = magData;
-            // Render lại lần nữa cho magazine
-            renderAllSections();
+            // Magazine Fallback
+            if (!magazineSnap.empty) {
+                magazinePosts = magazineSnap.docs.map(doc => ({ ...doc.data(), id: doc.id, _id: doc.id }));
+                renderAllSections();
+            } else {
+                fetch('/api/magazine').then(r => r.json()).then(data => {
+                    if (data && data.length > 0) {
+                        magazinePosts = data;
+                        renderAllSections();
+                    }
+                }).catch(() => {});
+            }
+        } else {
+            // LOCAL API FETCHING (Legacy)
+            const configPromise = fetch('/api/config').then(r => r.ok ? r.json() : null).catch(() => null);
+            const productsPromise = fetch('/api/products').then(r => r.ok ? r.json() : null).catch(() => null);
+            const magazinePromise = fetch('/api/magazine').then(r => r.ok ? r.json() : null).catch(() => null);
+
+            const [configData, prodData] = await Promise.all([configPromise, productsPromise]);
+
+            if (configData) {
+                updateWebsiteConfig(configData);
+            }
+
+            if (prodData && Array.isArray(prodData)) {
+                products = prodData;
+                filteredProducts = [...products];
+                window.allProducts = products;
+                localStorage.setItem('qh_products_cache', JSON.stringify(products));
+                renderAllSections();
+            }
+
+            const magData = await magazinePromise;
+            if (magData && Array.isArray(magData)) {
+                magazinePosts = magData;
+                renderAllSections();
+            }
         }
     } catch (error) {
         console.error("Q&H: Lỗi tải dữ liệu khởi tạo:", error);
@@ -1027,6 +1074,46 @@ function initEvents() {
         }, false);
     }
 
+    // Google Login Logic
+    document.addEventListener('click', async (e) => {
+        if (e.target.closest('#googleLoginBtn')) {
+            console.log("Q&H: Google login clicked");
+            if (!isFirebaseActive) {
+                showToast("Firebase chưa được cấu hình!");
+                return;
+            }
+
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                const user = result.user;
+
+                // Auto-assign Admin role for specific email
+                const adminEmail = 'hienng16122005@gmail.com';
+                const userRole = (user.email === adminEmail) ? 'Quản trị viên' : 'Khách hàng';
+
+                const db = firebase.firestore();
+                await db.collection('users').doc(user.uid).set({
+                    name: user.displayName || user.email.split('@')[0],
+                    email: user.email,
+                    role: userRole,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                handleAuthResponse({
+                    name: user.displayName || user.email.split('@')[0],
+                    email: user.email,
+                    role: userRole,
+                    token: await user.getIdToken()
+                }, `Chào mừng ${user.displayName || 'bạn'} đã đăng nhập!`);
+
+            } catch (error) {
+                console.error("Q&H: Google login error", error);
+                showToast("Đăng nhập thất bại: " + error.message);
+            }
+        }
+    });
+
     // --- DÙNG EVENT DELEGATION CHO LOGIN/REGISTER ---
     document.addEventListener('submit', async (e) => {
         const target = e.target;
@@ -1061,31 +1148,52 @@ function initEvents() {
             }
             
             try {
-                console.log("Q&H: Sending login request to /api/users/login");
-                const response = await fetch('/api/users/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+                if (isFirebaseActive) {
+                    console.log("Q&H: Authenticating via Firebase...");
+                    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    
+                    // Fetch user details from Firestore
+                    const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                    if (!userDoc.exists) throw new Error("Không tìm thấy thông tin người dùng");
+                    
+                    const userData = userDoc.data();
+                    handleAuthResponse({
+                        success: true,
+                        token: await user.getIdToken(),
+                        name: userData.name,
+                        email: userData.email,
+                        role: userData.role
+                    }, `Chào mừng ${userData.name} đã trở lại!`);
+                } else {
+                    console.log("Q&H: Sending login request to /api/users/login");
+                    const response = await fetch('/api/users/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
 
-                let data;
-                try {
-                    data = await response.json();
-                } catch (e) {
-                    console.error("Q&H: Failed to parse login response as JSON", e);
-                    throw new Error(`Server trả về lỗi không xác định (${response.status})`);
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        console.error("Q&H: Failed to parse login response as JSON", e);
+                        throw new Error(`Server trả về lỗi không xác định (${response.status})`);
+                    }
+
+                    if (!response.ok) {
+                        console.warn("Q&H: Login rejected by server", data);
+                        throw new Error(data.message || `Lỗi server (${response.status})`);
+                    }
+
+                    console.log("Q&H: Login success", data);
+                    handleAuthResponse(data, `Chào mừng ${data.name} đã trở lại!`);
                 }
-
-                if (!response.ok) {
-                    console.warn("Q&H: Login rejected by server", data);
-                    throw new Error(data.message || `Lỗi server (${response.status})`);
-                }
-
-                console.log("Q&H: Login success", data);
-                handleAuthResponse(data, `Chào mừng ${data.name} đã trở lại!`);
             } catch (err) {
                 console.error("Q&H: Login failure details:", err);
-                showToast(err.message || 'Lỗi kết nối server');
+                let message = err.message;
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') message = 'Email hoặc mật khẩu không chính xác';
+                showToast(message || 'Lỗi kết nối server');
             } finally {
                 if (submitBtn) {
                     submitBtn.disabled = false;
@@ -1134,24 +1242,49 @@ function initEvents() {
             }
 
             try {
-                console.log("Q&H: Sending register request to /api/users");
-                const response = await fetch('/api/users', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password })
-                });
+                if (isFirebaseActive) {
+                    console.log("Q&H: Registering via Firebase...");
+                    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
 
-                const data = await response.json();
+                    // Create user document in Firestore
+                    const userData = {
+                        name,
+                        email,
+                        role: 'Khách hàng',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    await firebase.firestore().collection('users').doc(user.uid).set(userData);
 
-                if (!response.ok) {
-                    throw new Error(data.message || `Lỗi server (${response.status})`);
+                    handleAuthResponse({
+                        success: true,
+                        token: await user.getIdToken(),
+                        name: userData.name,
+                        email: userData.email,
+                        role: userData.role
+                    }, 'Đăng ký tài khoản thành công!');
+                } else {
+                    console.log("Q&H: Sending register request to /api/users");
+                    const response = await fetch('/api/users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.message || `Lỗi server (${response.status})`);
+                    }
+
+                    console.log("Q&H: Register success", data);
+                    handleAuthResponse(data, 'Đăng ký tài khoản thành công!');
                 }
-
-                console.log("Q&H: Register success", data);
-                handleAuthResponse(data, 'Đăng ký tài khoản thành công!');
             } catch (err) {
                 console.error("Q&H: Register failure:", err);
-                showToast(err.message || 'Lỗi kết nối server');
+                let message = err.message;
+                if (err.code === 'auth/email-already-in-use') message = 'Email này đã được sử dụng';
+                showToast(message || 'Lỗi kết nối server');
             } finally {
                 if (submitBtn) {
                     submitBtn.disabled = false;
@@ -1218,7 +1351,6 @@ function initEvents() {
             }
         };
     }
-}
 
     // PROFILE TAB LOGIC
     window.switchProfileTab = function(tabId) {
@@ -1253,26 +1385,35 @@ function initEvents() {
         if (!ordersList) return;
 
         try {
-            // Lấy đơn hàng thật từ Database dựa trên email
             const email = localStorage.getItem('qh_userEmail');
-            const token = localStorage.getItem('qh_sessionToken');
-            const response = await fetch(`/api/orders/myorders?email=${email}`, {
-                headers: { 
-                    'x-user-email': email,
-                    'x-admin-token': token || ''
-                }
-            });
-            
-            if (!response.ok) throw new Error('Không thể tải đơn hàng');
-            const orders = await response.json();
+            let orders = [];
+
+            if (isFirebaseActive) {
+                const db = firebase.firestore();
+                const snap = await db.collection('orders')
+                    .where('userEmail', '==', email)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                orders = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
+            } else {
+                const token = localStorage.getItem('qh_sessionToken');
+                const response = await fetch(`/api/orders/myorders?email=${email}`, {
+                    headers: { 
+                        'x-user-email': email,
+                        'x-admin-token': token || ''
+                    }
+                });
+                if (!response.ok) throw new Error('Không thể tải đơn hàng');
+                orders = await response.json();
+            }
             
             const filteredOrders = orders.filter(o => (o.status || 'Chờ xác nhận') === statusFilter);
 
             if (filteredOrders.length === 0) {
                 ordersList.innerHTML = '<div style="color: #888; text-align: center; padding: 60px 20px;">' +
-                                    '<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" style="margin-bottom: 15px;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>' +
-                                    '<div style="font-size: 15px; font-weight: 500;">Bạn chưa có đơn hàng nào ở trạng thái này!</div>' +
-                                    '</div>';
+                                     '<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" style="margin-bottom: 15px;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>' +
+                                     '<div style="font-size: 15px; font-weight: 500;">Bạn chưa có đơn hàng nào ở trạng thái này!</div>' +
+                                     '</div>';
                 return;
             }
 
@@ -1295,6 +1436,7 @@ function initEvents() {
             html += '</div>';
             ordersList.innerHTML = html;
         } catch (err) {
+            console.error("Q&H: Lỗi tải đơn hàng:", err);
             ordersList.innerHTML = '<p style="text-align:center; padding: 20px;">Không thể tải đơn hàng.</p>';
         }
     };
@@ -1437,15 +1579,12 @@ function initEvents() {
                 const userEmail = localStorage.getItem('qh_userEmail');
 
                 try {
-                    const token = localStorage.getItem('qh_sessionToken');
-                    const response = await fetch('/api/orders', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-user-email': userEmail || '',
-                            'x-admin-token': token || ''
-                        },
-                        body: JSON.stringify({
+                    let order;
+                    if (isFirebaseActive) {
+                        const db = firebase.firestore();
+                        const id = db.collection('orders').doc().id;
+                        const orderData = {
+                            id: id,
                             customerInfo: { name, phone, email, address, note },
                             items: currentCheckoutItems.map(i => ({
                                 product: i._id || i.id,
@@ -1454,17 +1593,44 @@ function initEvents() {
                                 price: i.price
                             })),
                             paymentMethod: payment,
-                            totalPrice: total
-                        })
-                    });
+                            totalPrice: total,
+                            status: 'Chờ xác nhận',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            userEmail: userEmail || email
+                        };
+                        
+                        await db.collection('orders').doc(id).set(orderData);
+                        order = { ...orderData, _id: id };
+                    } else {
+                        const token = localStorage.getItem('qh_sessionToken');
+                        const response = await fetch('/api/orders', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-user-email': userEmail || '',
+                                'x-admin-token': token || ''
+                            },
+                            body: JSON.stringify({
+                                customerInfo: { name, phone, email, address, note },
+                                items: currentCheckoutItems.map(i => ({
+                                    product: i._id || i.id,
+                                    name: i.name,
+                                    quantity: i.quantity,
+                                    price: i.price
+                                })),
+                                paymentMethod: payment,
+                                totalPrice: total
+                            })
+                        });
 
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(errorData.message || 'Lỗi khi đặt hàng');
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.message || 'Lỗi khi đặt hàng');
+                        }
+                        
+                        const orderDataBody = await response.json();
+                        order = orderDataBody.order || orderDataBody;
                     }
-                    
-                    const orderData = await response.json();
-                    const order = orderData.order || orderData;
 
                     if (!isDirectCheckout) {
                         cart = [];
@@ -1476,38 +1642,39 @@ function initEvents() {
                         renderProfileOrders();
                     }
 
-                    const checkoutSuccess = document.getElementById('checkoutSuccess');
-                    const checkoutQR = document.getElementById('checkoutQR');
-                    if (checkoutSuccess) {
-                        newForm.style.display = 'none';
-                        if (checkoutQR) checkoutQR.style.display = 'none';
-                        checkoutSuccess.style.display = 'block';
-                        
-                        const orderId = order.id || order._id || "N/A";
-                        const successOrderId = document.getElementById('successOrderId');
-                        if (successOrderId) successOrderId.textContent = '#' + orderId.toString().toUpperCase().substring(0,8);
-                        
-                        const successOrderTotal = document.getElementById('successOrderTotal');
-                        if (successOrderTotal && order.totalPrice) successOrderTotal.textContent = order.totalPrice.toLocaleString() + 'đ';
-                        
-                        const successOrderItems = document.getElementById('successOrderItems');
-                        if (successOrderItems && order.items) {
-                            successOrderItems.innerHTML = order.items.map(item => `
-                                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px;">
-                                    <span>${item.name} x${item.quantity}</span>
-                                    <span>${(item.price * item.quantity).toLocaleString()}đ</span>
-                                </div>
-                            `).join('');
+                    const showSuccessUI = () => {
+                        const checkoutSuccess = document.getElementById('checkoutSuccess');
+                        const checkoutQR = document.getElementById('checkoutQR');
+                        if (checkoutSuccess) {
+                            newForm.style.display = 'none';
+                            if (checkoutQR) checkoutQR.style.display = 'none';
+                            checkoutSuccess.style.display = 'block';
+                            
+                            const orderId = order._id || order.id || "N/A";
+                            const successOrderId = document.getElementById('successOrderId');
+                            if (successOrderId) successOrderId.textContent = '#' + orderId.toString().toUpperCase().substring(0,8);
+                            
+                            const successOrderTotal = document.getElementById('successOrderTotal');
+                            if (successOrderTotal && order.totalPrice) successOrderTotal.textContent = order.totalPrice.toLocaleString() + 'đ';
+                            
+                            const successOrderItems = document.getElementById('successOrderItems');
+                            if (successOrderItems && order.items) {
+                                successOrderItems.innerHTML = order.items.map(item => `
+                                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px;">
+                                        <span>${item.name} x${item.quantity}</span>
+                                        <span>${(item.price * item.quantity).toLocaleString()}đ</span>
+                                    </div>
+                                `).join('');
+                            }
+                        } else {
+                            showToast('Đặt hàng thành công!');
+                            if (checkoutOverlay) checkoutOverlay.classList.remove('active');
+                            setTimeout(() => window.location.reload(), 2000);
                         }
-                    } else {
-                        showToast('Đặt hàng thành công!');
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 2000);
-                    }
+                    };
 
                     if (payment === 'BANK') {
-                        const realOrderId = orderData.orderId || (orderData.order ? orderData.order._id || orderData.order.id : orderData._id);
+                        const realOrderId = order._id || order.id || orderData.orderId || "";
                         const realOrderCode = realOrderId.toString().substring(0,8);
                         const qrView = document.getElementById('checkoutQR');
                         const qrCodeImg = document.getElementById('qrCodeImg');
@@ -1519,19 +1686,19 @@ function initEvents() {
                             newForm.style.display = 'none';
                             qrView.style.display = 'block';
                             
-                            if (qrAmount) qrAmount.textContent = response.order.totalPrice.toLocaleString() + 'đ';
+                            if (qrAmount) qrAmount.textContent = order.totalPrice.toLocaleString() + 'đ';
                             if (qrNote) qrNote.textContent = 'QH' + realOrderCode;
                             if (qrCodeImg) {
-                                const amount = response.order.totalPrice;
+                                const amount = order.totalPrice;
                                 qrCodeImg.src = `https://api.vietqr.io/image/vietcombank/0011004123456/qr_only.jpg?amount=${amount}&addInfo=QH${realOrderCode}&accountName=NGUYEN THI THANH HIEN`;
                             }
 
-                            confirmQRBtn.onclick = () => finalizeOrderUI(response);
+                            confirmQRBtn.onclick = () => showSuccessUI();
                         } else {
-                            finalizeOrderUI(response);
+                            showSuccessUI();
                         }
                     } else {
-                        finalizeOrderUI(response);
+                        showSuccessUI();
                     }
                 } catch (err) {
                     showToast('Lỗi: ' + err.message);
@@ -1598,6 +1765,7 @@ function initEvents() {
             }
         });
     }
+}
 
 /**
  * Hàm xử lý dữ liệu sau khi đăng nhập hoặc đăng ký thành công

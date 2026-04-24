@@ -524,6 +524,14 @@
                     <div class="label">Sắp hết hàng</div>
                     <div class="value" id="statLowStock" style="color: var(--danger);">0</div>
                 </div>
+                <div class="stat-card" style="background: #f0f7ff; border: 1px solid #cce3ff;">
+                    <div class="label" style="color: #0056b3;">Firebase Sync</div>
+                    <div class="value" style="margin-top: 15px;">
+                        <button onclick="syncLocalToFirebase()" class="btn-primary" style="padding: 10px 15px; font-size: 13px; width: 100%;">
+                            <i class="fas fa-cloud-upload-alt"></i> Đồng bộ lên Cloud
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="card">
@@ -873,7 +881,20 @@
 
     <div id="toastContainer"></div>
 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="/firebase-init.js"></script>
+
     <script>
+        // Check if Firebase is ACTIVE
+        let isFirebaseActive = false;
+        if (typeof firebase !== 'undefined' && firebase.apps.length > 0 && 
+            firebase.app().options.apiKey !== "YOUR_API_KEY") {
+            isFirebaseActive = true;
+            console.log("Admin: Firebase ACTIVE");
+        }
 
         // --- 1. DATA INITIALIZATION ---
         const DEFAULT_CATEGORIES = [
@@ -885,12 +906,12 @@
             { id: 6, name: 'Combo tiết kiệm', slug: 'combo' }
         ];
 
-        // Retrieve products and categories from localStorage
-        let products = JSON.parse(localStorage.getItem('qh_products')) || [];
-        let orders = JSON.parse(localStorage.getItem('qh_orders')) || [];
+        // Global data arrays
+        let products = [];
+        let orders = [];
         let users = [];
         let magazine = [];
-        let categories = JSON.parse(localStorage.getItem('qh_categories')) || DEFAULT_CATEGORIES;
+        let categories = DEFAULT_CATEGORIES;
 
         const API_BASE_URL = '/api';
             
@@ -900,80 +921,129 @@
             return { 'x-admin-token': token || '' };
         };
 
-        /**
-         * Hàm fetch API an toàn cho Admin
-         */
         async function safeFetch(url, options = {}) {
-            // Add cache-busting
             const separator = url.includes('?') ? '&' : '?';
             const freshUrl = `${url}${separator}t=${Date.now()}`;
-            
             const response = await fetch(freshUrl, options);
-            const contentType = response.headers.get("content-type") || "";
-
-            if (!response.ok) {
-                let errorMessage = `Lỗi hệ thống: ${response.status}`;
-                if (contentType.includes("application/json")) {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                } else {
-                    const errorText = await response.text();
-                    console.error(`Admin API Error [${response.status}] tại ${url}:`, errorText.substring(0, 500));
-                    errorMessage = contentType.includes("text/html") 
-                        ? "Đường dẫn API không chính xác hoặc Server trả về trang HTML 404." 
-                        : (errorText || errorMessage);
-                }
-                throw new Error(errorMessage);
-            }
-
-            if (contentType.includes("application/json")) {
-                return await response.json();
-            }
-
-            if (contentType.includes("text/html")) {
-                throw new Error("Dữ liệu không hợp lệ: Nhận được trang HTML thay vì JSON API.");
-            }
-
-            return await response.text();
+            if (!response.ok) throw new Error(`Lỗi API: ${response.status}`);
+            return await response.json();
         }
 
-        // --- ADMIN LOGIN PROTECT VIA BACKEND (KHÔNG DÙNG SESSIONSTORAGE) ---
         async function checkAdminAuth() {
-            const email = localStorage.getItem('qh_userEmail');
-            if (!email) {
-                window.location.href = 'index.html';
-                return;
-            }
-            try {
-                const res = await safeFetch(`${API_BASE_URL}/users/admin-check`, { headers: getAuthHeader() });
-                if (!res.isAdmin) {
-                    window.location.href = 'index.html';
-                }
-            } catch (err) {
-                console.error("Xác thực Admin thất bại:", err.message);
-                window.location.href = 'index.html';
+            if (isFirebaseActive) {
+                return new Promise((resolve) => {
+                    firebase.auth().onAuthStateChanged(async (user) => {
+                        if (!user) {
+                            window.location.href = 'index.html';
+                            return;
+                        }
+                        const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+                        if (!doc.exists || doc.data().role !== 'Quản trị viên') {
+                            window.location.href = 'index.html';
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+            } else {
+                const email = localStorage.getItem('qh_userEmail');
+                if (!email) { window.location.href = 'index.html'; return; }
+                try {
+                    const res = await safeFetch(`${API_BASE_URL}/users/admin-check`, { headers: getAuthHeader() });
+                    if (!res.isAdmin) window.location.href = 'index.html';
+                } catch (err) { window.location.href = 'index.html'; }
             }
         }
         checkAdminAuth();
 
-        async function loadAdminData() {
-            console.log("Admin: Bắt đầu tải dữ liệu...");
+        async function syncLocalToFirebase() {
+            if (!isFirebaseActive) {
+                showToast("Bạn chưa cấu hình Firebase trong firebase-init.js!");
+                return;
+            }
+            if (!confirm("Bạn có muốn đẩy toàn bộ dữ liệu từ file local lên Firebase không? (Dữ liệu cũ trên Firebase sẽ được giữ nguyên)")) return;
+
+            showToast("Bắt đầu đồng bộ...");
+            const db = firebase.firestore();
+            let count = 0;
+
             try {
-                const [prodData, orderData, catData, userData, magData] = await Promise.all([
-                    safeFetch(`${API_BASE_URL}/products`),
-                    safeFetch(`${API_BASE_URL}/admin/orders`, { headers: getAuthHeader() }),
-                    safeFetch(`${API_BASE_URL}/categories`),
-                    safeFetch(`${API_BASE_URL}/admin/users`, { headers: getAuthHeader() }),
-                    safeFetch(`${API_BASE_URL}/magazine`)
-                ]);
-                
-                console.log("Admin: Đã nhận dữ liệu từ Server", { prodCount: prodData.length, orderCount: orderData.length, magCount: magData.length });
-                
-                products = prodData;
-                orders = orderData;
-                categories = catData.length > 0 ? catData : DEFAULT_CATEGORIES;
-                users = userData;
-                magazine = magData;
+                // Sync Products
+                for (const p of products) {
+                    const id = (p._id || p.id).toString();
+                    const { _id, ...cleanData } = p;
+                    await db.collection('products').doc(id).set(cleanData, { merge: true });
+                    count++;
+                }
+
+                // Sync Categories
+                for (const c of categories) {
+                    const id = (c.id || 'cat-' + Date.now()).toString();
+                    await db.collection('categories').doc(id).set(c, { merge: true });
+                }
+
+                // Sync Magazine
+                for (const m of magazine) {
+                    const id = (m._id || m.id).toString();
+                    await db.collection('magazine').doc(id).set(m, { merge: true });
+                }
+
+                showToast(`Đã đồng bộ thành công ${count} sản phẩm lên Firebase!`);
+                loadAdminData();
+            } catch (err) {
+                console.error("Sync Error:", err);
+                showToast("Lỗi đồng bộ: " + err.message);
+            }
+        }
+
+        async function loadAdminData() {
+            console.log("Admin: Loading data...");
+            try {
+                if (isFirebaseActive) {
+                    const db = firebase.firestore();
+                    const [prodSnap, orderSnap, catSnap, userSnap, magSnap] = await Promise.all([
+                        db.collection('products').get(),
+                        db.collection('orders').orderBy('createdAt', 'desc').get(),
+                        db.collection('categories').get(),
+                        db.collection('users').get(),
+                        db.collection('magazine').get()
+                    ]);
+
+                    products = prodSnap.docs.map(d => ({ ...d.data(), _id: d.id, id: d.id }));
+                    orders = orderSnap.docs.map(d => ({ ...d.data(), _id: d.id, id: d.id }));
+                    categories = catSnap.docs.map(d => ({ ...d.data(), _id: d.id, id: d.id }));
+                    users = userSnap.docs.map(d => ({ ...d.data(), _id: d.id, id: d.id }));
+                    magazine = magSnap.docs.map(d => ({ ...d.data(), _id: d.id, id: d.id }));
+
+                    // ⭐ Fallback to Local API if Firestore is empty (Initial Sync use-case)
+                    if (products.length === 0) {
+                        console.log("Admin: Products empty on Firestore, checking local API...");
+                        const localProd = await safeFetch(`${API_BASE_URL}/products`);
+                        if (localProd && localProd.length > 0) products = localProd;
+                    }
+                    if (categories.length === 0) {
+                        const localCat = await safeFetch(`${API_BASE_URL}/categories`);
+                        if (localCat && localCat.length > 0) categories = localCat;
+                        else categories = DEFAULT_CATEGORIES;
+                    }
+                    if (magazine.length === 0) {
+                        const localMag = await safeFetch(`${API_BASE_URL}/magazine`);
+                        if (localMag && localMag.length > 0) magazine = localMag;
+                    }
+                } else {
+                    const [prodData, orderData, catData, userData, magData] = await Promise.all([
+                        safeFetch(`${API_BASE_URL}/products`),
+                        safeFetch(`${API_BASE_URL}/admin/orders`, { headers: getAuthHeader() }),
+                        safeFetch(`${API_BASE_URL}/categories`),
+                        safeFetch(`${API_BASE_URL}/admin/users`, { headers: getAuthHeader() }),
+                        safeFetch(`${API_BASE_URL}/magazine`)
+                    ]);
+                    products = prodData;
+                    orders = orderData;
+                    categories = catData.length > 0 ? catData : DEFAULT_CATEGORIES;
+                    users = userData;
+                    magazine = magData;
+                }
                 
                 renderDashboard();
                 renderProducts();
@@ -1238,16 +1308,26 @@
                 category: document.getElementById('magCat').value,
                 image: document.getElementById('magThumb').value,
                 description: document.getElementById('magDesc').value,
-                content: document.getElementById('magContent').value
+                content: document.getElementById('magContent').value,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             try {
-                const method = id ? 'PUT' : 'POST';
-                const url = id ? `${API_BASE_URL}/magazine/${id}` : `${API_BASE_URL}/magazine`;
-                await safeFetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-                    body: JSON.stringify(postData)
-                });
+                if (isFirebaseActive) {
+                    const db = firebase.firestore();
+                    if (id) {
+                        await db.collection('magazine').doc(id).update(postData);
+                    } else {
+                        await db.collection('magazine').add(postData);
+                    }
+                } else {
+                    const method = id ? 'PUT' : 'POST';
+                    const url = id ? `${API_BASE_URL}/magazine/${id}` : `${API_BASE_URL}/magazine`;
+                    await safeFetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+                        body: JSON.stringify(postData)
+                    });
+                }
                 showToast(id ? 'Đã cập nhật bài viết' : 'Đã đăng bài viết mới');
                 loadAdminData();
                 closeMagazineModal();
@@ -1256,7 +1336,11 @@
         window.deleteMagazinePost = async function(id) {
             if (confirm('Xóa bài viết này?')) {
                 try {
-                    await safeFetch(`${API_BASE_URL}/magazine/${id}`, { method: 'DELETE', headers: getAuthHeader() });
+                    if (isFirebaseActive) {
+                        await firebase.firestore().collection('magazine').doc(id).delete();
+                    } else {
+                        await safeFetch(`${API_BASE_URL}/magazine/${id}`, { method: 'DELETE', headers: getAuthHeader() });
+                    }
                     showToast('Đã xóa bài viết');
                     loadAdminData();
                 } catch (err) { showToast(err.message); }
@@ -1279,11 +1363,15 @@
                 email: document.getElementById('cfgEmail').value
             };
             try {
-                await safeFetch(`${API_BASE_URL}/config`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-                    body: JSON.stringify(cfgData)
-                });
+                if (isFirebaseActive) {
+                    await firebase.firestore().collection('settings').doc('website').set(cfgData);
+                } else {
+                    await safeFetch(`${API_BASE_URL}/config`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+                        body: JSON.stringify(cfgData)
+                    });
+                }
                 localStorage.setItem('qh_hotline', cfgData.hotline);
                 localStorage.setItem('qh_email', cfgData.email);
                 showToast('Đã cập nhật cấu hình hệ thống');
@@ -1344,17 +1432,28 @@
                 stock: parseInt(document.getElementById('prodStock').value),
                 image: document.getElementById('prodImage').value,
                 images: document.getElementById('prodImages').value.split(',').map(img => img.trim()).filter(img => img),
-                details: document.getElementById('prodDetails').value
+                details: document.getElementById('prodDetails').value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
             try {
-                const method = id ? 'PUT' : 'POST';
-                const url = id ? `${API_BASE_URL}/admin/products/${id}` : `${API_BASE_URL}/admin/products`;
-                await safeFetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-                    body: JSON.stringify(productData)
-                });
+                if (isFirebaseActive) {
+                    const db = firebase.firestore();
+                    if (id) {
+                        await db.collection('products').doc(id).update(productData);
+                    } else {
+                        productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                        await db.collection('products').add(productData);
+                    }
+                } else {
+                    const method = id ? 'PUT' : 'POST';
+                    const url = id ? `${API_BASE_URL}/admin/products/${id}` : `${API_BASE_URL}/admin/products`;
+                    await safeFetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+                        body: JSON.stringify(productData)
+                    });
+                }
                 
                 showToast(id ? 'Đã cập nhật sản phẩm' : 'Đã thêm sản phẩm');
                 loadAdminData();
@@ -1367,10 +1466,14 @@
         async function deleteProduct(id) {
             if (confirm('Xóa sản phẩm này?')) {
                 try {
-                    await safeFetch(`${API_BASE_URL}/admin/products/${id}`, {
-                        method: 'DELETE',
-                        headers: getAuthHeader()
-                    });
+                    if (isFirebaseActive) {
+                        await firebase.firestore().collection('products').doc(id).delete();
+                    } else {
+                        await safeFetch(`${API_BASE_URL}/admin/products/${id}`, {
+                            method: 'DELETE',
+                            headers: getAuthHeader()
+                        });
+                    }
                     showToast('Đã xóa sản phẩm');
                     loadAdminData();
                 } catch (err) {
@@ -1411,17 +1514,26 @@
         document.getElementById('saveCategoryBtn').onclick = async () => {
             const id = document.getElementById('catId').value;
             const catData = {
-                id: id ? id : 'CAT-' + Date.now(),
                 name: document.getElementById('catName').value,
                 slug: document.getElementById('catSlug').value
             };
 
             try {
-                await safeFetch(`${API_BASE_URL}/categories`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-                    body: JSON.stringify(catData)
-                });
+                if (isFirebaseActive) {
+                    const db = firebase.firestore();
+                    if (id) {
+                        await db.collection('categories').doc(id).update(catData);
+                    } else {
+                        await db.collection('categories').add(catData);
+                    }
+                } else {
+                    const fullData = { ...catData, id: id ? id : 'CAT-' + Date.now() };
+                    await safeFetch(`${API_BASE_URL}/categories`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+                        body: JSON.stringify(fullData)
+                    });
+                }
                 showToast('Đã lưu danh mục vào hệ thống');
                 loadAdminData();
                 closeCategoryModal();
@@ -1433,10 +1545,14 @@
         async function deleteCategory(id) {
             if (confirm('Xóa danh mục này?')) {
                 try {
-                    await safeFetch(`${API_BASE_URL}/categories/${id}`, {
-                        method: 'DELETE',
-                        headers: getAuthHeader()
-                    });
+                    if (isFirebaseActive) {
+                        await firebase.firestore().collection('categories').doc(id).delete();
+                    } else {
+                        await safeFetch(`${API_BASE_URL}/categories/${id}`, {
+                            method: 'DELETE',
+                            headers: getAuthHeader()
+                        });
+                    }
                     showToast('Đã xóa danh mục');
                     loadAdminData();
                 } catch (err) {
@@ -1448,11 +1564,18 @@
         // --- 6. ORDER LOGIC ---
         async function updateOrderStatus(id, newStatus) {
             try {
-                await safeFetch(`${API_BASE_URL}/orders/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-                    body: JSON.stringify({ status: newStatus })
-                });
+                if (isFirebaseActive) {
+                    await firebase.firestore().collection('orders').doc(id).update({
+                        status: newStatus,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    await safeFetch(`${API_BASE_URL}/orders/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                }
                 
                 showToast(`Cập nhật thành: ${newStatus}`);
                 loadAdminData();
@@ -1464,10 +1587,17 @@
         async function confirmPayment(id) {
             if (confirm('Xác nhận khách hàng đã thanh toán đơn hàng này?')) {
                 try {
-                    await safeFetch(`${API_BASE_URL}/orders/${id}/pay`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
-                    });
+                    if (isFirebaseActive) {
+                        await firebase.firestore().collection('orders').doc(id).update({
+                            isPaid: true,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } else {
+                        await safeFetch(`${API_BASE_URL}/orders/${id}/pay`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
+                        });
+                    }
                     
                     showToast('Đã xác nhận thanh toán');
                     loadAdminData();

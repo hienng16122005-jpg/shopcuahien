@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function emailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Quản trị viên';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Collections ---
+
+    // Users
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+               data.email is string && data.email.size() > 0 && data.email.size() <= 100 &&
+               data.role in ['Khách hàng', 'Quản trị viên'];
+      }
+
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isSignedIn() && isValidUser(incoming()) && (
+        (incoming().role == 'Khách hàng') || 
+        // Initial admin setup or created by existing admin
+        (!exists(/databases/$(database)/documents/users/admin_lock) || isAdmin())
+      );
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(incoming()) && (
+        isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['name'])
+      );
+    }
+
+    // Products
+    match /products/{productId} {
+      function isValidProduct(data) {
+        return data.name is string && data.name.size() > 0 && 
+               data.price is number && data.price >= 0 &&
+               data.stock is int && data.stock >= 0;
+      }
+
+      allow read: if true;
+      allow write: if isAdmin() && isValidProduct(incoming());
+    }
+
+    // Categories
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Magazine
+    match /magazine/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      function isValidOrder(data) {
+        return data.customerInfo is map && data.items is list &&
+               data.totalPrice is number && data.totalPrice >= 0 &&
+               data.status in ['Chờ xác nhận', 'Đang xử lý', 'Đang giao', 'Đã hoàn thành', 'Đã hủy'];
+      }
+
+      allow read: if isAdmin() || (isSignedIn() && existing().customerInfo.email == request.auth.token.email);
+      allow create: if isSignedIn() && isValidOrder(incoming()) && incoming().customerInfo.email == request.auth.token.email;
+      allow update: if isAdmin() && isValidOrder(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Settings
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
